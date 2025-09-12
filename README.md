@@ -13,11 +13,11 @@ It passes through hardware ranges for some Flipper/Hollywood hardware blocks to 
 It currently stubs out just enough to get basic devkitPPC/libogc applications stumbling into `main()`.  Most real functionality past that point (notably graphics) are unimplemented.  Many things can't "just" be passed through, because the hardware expects to take physical memory addresses, which would trample host memory when the guest sends *it's* view of the physical address space to the device.
 
 ## Copyright / Legal disclaimers
-"Nintendo®" is a registered trademark of Nintendo of America Inc.
-"GameCube®" is a registered trademark of Nintendo of America Inc.
-"Wii®" is a registered trademark of Nintendo of America Inc.
-"Wii U®" is a registered trademark of Nintendo of America Inc.
-"Apple®" is a registered trademark of Apple Inc.
-"Linux®" is the registered trademark of Linus Torvalds in the U.S. and other countries.
-
+"Nintendo®" is a registered trademark of Nintendo of America Inc.  
+"GameCube®" is a registered trademark of Nintendo of America Inc.  
+"Wii®" is a registered trademark of Nintendo of America Inc.  
+"Wii U®" is a registered trademark of Nintendo of America Inc.  
+"Apple®" is a registered trademark of Apple Inc.  
+"Linux®" is the registered trademark of Linus Torvalds in the U.S. and other countries.  
+  
 Code of DOL Tools is Copyright (C) 2025 Techflash and DOL Tools contributors.  Licensed under the GNU GPL v2
