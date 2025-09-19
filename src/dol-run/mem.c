@@ -39,8 +39,9 @@
 static int maxBAT;
 
 static void E_MemReloadMap(void) {
-	int i, j;
-	uint32_t *ibatu, *ibatl, *dbatu, *dbatl, paddr, vaddr;
+	int i, j, fd;
+	uint32_t *ibatu, *ibatl, *dbatu, *dbatl, paddr, vaddr, size;
+	uint8_t **map_i, **map_d;
 	/* here we go... */
 
 	/*
@@ -67,7 +68,13 @@ static void E_MemReloadMap(void) {
 
 			/* IBATs can only possibly point to MEM1 */
 			paddr = *ibatl & BATL_BPRN;
-			if (paddr != 0x00000000) {
+			if (paddr == MEM1_PADDR) {
+				map_i = E_State.mem.mem1_map_i;
+				map_d = E_State.mem.mem1_map_d;
+				size = E_State.mem.mem1_size;
+				fd = E_State.mem.mem1_fd;
+			}
+			else {
 				printf("FATAL: MEM: BATs: GCN: Trying to map IBAT%d to phys addr 0x%08X, which is not MEM1\n", i, paddr);
 				E_State.fatalError = true;
 				return;
@@ -75,20 +82,19 @@ static void E_MemReloadMap(void) {
 
 			/* Is it already mapped? */
 			for (j = 0; j < maxBAT; j++) {
-				if (E_State.mem.mem1_map_i[j] == (uint8_t *)vaddr)
+				if (map_i[j] == (uint8_t *)vaddr)
 					goto gcn_dbat; /* Yes - ignore this mapping! */
 			}
 			/* Map MEM1 Instr @ BEPI */
 			vaddr = *ibatu & BATU_BEPI; /* don't shift it to keep a full address */
 			printf("MEM: BATs: GCN: Mapping IBAT%d, phys addr 0x%08X -> virt addr 0x%08X\n", i, paddr, vaddr);
 			fflush(stdout);
-			E_State.mem.mem1_map_i[i] = mmap((void *)vaddr,
-											E_State.mem.mem1_size,
-											PROT_READ | PROT_WRITE | PROT_EXEC,
-											MAP_SHARED | MAP_FIXED,
-											E_State.mem.mem1_fd, 0);
+			map_i[i] = mmap((void *)vaddr, size,
+							PROT_READ | PROT_WRITE | PROT_EXEC,
+							MAP_SHARED | MAP_FIXED,
+							fd, 0);
 
-			if (E_State.mem.mem1_map_i[i] == MAP_FAILED) {
+			if (map_i[i] == MAP_FAILED) {
 				printf("FATAL: MEM: BATs: GCN: Failed mapping IBAT%d with phys addr 0x%08X to virt addr 0x%08X\n", i, paddr, vaddr);
 				E_State.fatalError = true;
 				return;
@@ -100,8 +106,13 @@ static void E_MemReloadMap(void) {
 
 			/* DBATs can point to either MEM1 or Flipper I/O */
 			paddr = *dbatl & BATL_BPRN;
-			if (paddr != 0x00000000) {
-				/* FIXME: Handle Flipper I/O */
+			if (paddr == MEM1_PADDR) {
+				map_i = E_State.mem.mem1_map_i;
+				map_d = E_State.mem.mem1_map_d;
+				size = E_State.mem.mem1_size;
+				fd = E_State.mem.mem1_fd;
+			}
+			else {
 				printf("FATAL: MEM: BATs: GCN: Trying to map DBAT%d to phys addr 0x%08X, which is not MEM1\n", i, paddr);
 				E_State.fatalError = true;
 				return;
@@ -112,24 +123,23 @@ static void E_MemReloadMap(void) {
 
 			/* Is it already mapped? */
 			for (j = 0; j < maxBAT; j++) {
-				if (E_State.mem.mem1_map_d[j] == (uint8_t *)vaddr)
+				if (map_d[j] == (uint8_t *)vaddr)
 					goto gcn_out; /* Yes - ignore it */
 
 				/* Make sure we don't override an instruction mapping */
-				if (E_State.mem.mem1_map_i[j] == (uint8_t *)vaddr)
+				if (map_i[j] == (uint8_t *)vaddr)
 					goto gcn_out; /* Yes - ignore this mapping! */
 			}
 
 			/* No other mapping for this vaddr, map it */
 			printf("MEM: BATs: GCN: Mapping DBAT%d, phys addr 0x%08X -> virt addr 0x%08X\n", i, paddr, vaddr);
 			fflush(stdout);
-			E_State.mem.mem1_map_d[i] = mmap((void *)vaddr,
-											E_State.mem.mem1_size,
-											PROT_READ | PROT_WRITE,
-											MAP_SHARED | MAP_FIXED,
-											E_State.mem.mem1_fd, 0);
+			map_d[i] = mmap((void *)vaddr, size,
+							PROT_READ | PROT_WRITE,
+							MAP_SHARED | MAP_FIXED,
+							fd, 0);
 
-			if (E_State.mem.mem1_map_i[i] == MAP_FAILED) {
+			if (map_i[i] == MAP_FAILED) {
 				printf("FATAL: MEM: BATs: GCN: Failed mapping IBAT%d with phys addr 0x%08X to virt addr 0x%08X\n", i, paddr, vaddr);
 				E_State.fatalError = true;
 				return;
@@ -141,12 +151,98 @@ static void E_MemReloadMap(void) {
 			if (*ibatu == 0 && *ibatl == 0)
 				goto wii_dbat;
 
-			puts("MEM: BATs: Wii: Map IBAT");
+			/* IBATs can only possibly point to MEM1 or MEM2 */
+			paddr = *ibatl & BATL_BPRN;
+			if (paddr == MEM1_PADDR) {
+				map_i = E_State.mem.mem1_map_i;
+				map_d = E_State.mem.mem1_map_d;
+				size = E_State.mem.mem1_size;
+				fd = E_State.mem.mem1_fd;
+			}
+			else if (paddr == MEM2_PADDR) {
+				map_i = E_State.mem.mem2_map_i;
+				map_d = E_State.mem.mem2_map_d;
+				size = E_State.mem.mem2_size;
+				fd = E_State.mem.mem2_fd;
+			}
+			else {
+				printf("FATAL: MEM: BATs: Wii: Trying to map IBAT%d to phys addr 0x%08X, which is not MEM1 nor MEM2\n", i, paddr);
+				E_State.fatalError = true;
+				return;
+			}
+
+			/* Is it already mapped? */
+			for (j = 0; j < maxBAT; j++) {
+				if (map_i[j] == (uint8_t *)vaddr)
+					goto wii_dbat; /* Yes - ignore this mapping! */
+			}
+
+			/* Map MEM1/2 Instr @ BEPI */
+			vaddr = *ibatu & BATU_BEPI; /* don't shift it to keep a full address */
+			printf("MEM: BATs: Wii: Mapping IBAT%d, phys addr 0x%08X -> virt addr 0x%08X\n", i, paddr, vaddr);
+			fflush(stdout);
+			map_i[i] = mmap((void *)vaddr, size,
+							PROT_READ | PROT_WRITE | PROT_EXEC,
+							MAP_SHARED | MAP_FIXED,
+							fd, 0);
+
+			if (map_i[i] == MAP_FAILED) {
+				printf("FATAL: MEM: BATs: GCN: Failed mapping IBAT%d with phys addr 0x%08X to virt addr 0x%08X\n", i, paddr, vaddr);
+				E_State.fatalError = true;
+				return;
+			}
+
 		wii_dbat:
 			if (*dbatu == 0 && *dbatl == 0)
 				goto wii_out;
 
-			puts("MEM: BATs: Wii: Map DBAT");
+			/* DBATs can point to MEM1, MEM2, Flipper I/O, or Hollywood I/O */
+			paddr = *dbatl & BATL_BPRN;
+			if (paddr == MEM1_PADDR) {
+				map_i = E_State.mem.mem1_map_i;
+				map_d = E_State.mem.mem1_map_d;
+				size = E_State.mem.mem1_size;
+				fd = E_State.mem.mem1_fd;
+			}
+			else if (paddr == MEM2_PADDR) {
+				map_i = E_State.mem.mem2_map_i;
+				map_d = E_State.mem.mem2_map_d;
+				size = E_State.mem.mem2_size;
+				fd = E_State.mem.mem2_fd;
+			}
+			else {
+				printf("FATAL: MEM: BATs: Wii: Trying to map DBAT%d to phys addr 0x%08X, which is not MEM1 nor MEM2\n", i, paddr);
+				E_State.fatalError = true;
+				return;
+			}
+
+			/* Map MEM1/2 Data @ BEPI */
+			vaddr = *dbatu & BATU_BEPI; /* don't shift it to keep a full address */
+
+			/* Is it already mapped? */
+			for (j = 0; j < maxBAT; j++) {
+				if (map_d[j] == (uint8_t *)vaddr)
+					goto wii_out; /* Yes - ignore it */
+
+				/* Make sure we don't override an instruction mapping */
+				if (map_i[j] == (uint8_t *)vaddr)
+					goto wii_out; /* Yes - ignore this mapping! */
+			}
+
+			/* No other mapping for this vaddr, map it */
+			printf("MEM: BATs: Wii: Mapping DBAT%d, phys addr 0x%08X -> virt addr 0x%08X\n", i, paddr, vaddr);
+			fflush(stdout);
+			map_d[i] = mmap((void *)vaddr, size,
+							PROT_READ | PROT_WRITE,
+							MAP_SHARED | MAP_FIXED,
+							fd, 0);
+
+			if (map_i[i] == MAP_FAILED) {
+				printf("FATAL: MEM: BATs: Wii: Failed mapping IBAT%d with phys addr 0x%08X to virt addr 0x%08X\n", i, paddr, vaddr);
+				E_State.fatalError = true;
+				return;
+			}
+
 		wii_out:
 			break;
 		}

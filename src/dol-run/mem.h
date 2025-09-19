@@ -8,6 +8,13 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+/* Constants */
+#define MEM1_PADDR 0x00000000
+#define MEM2_PADDR 0x10000000
+#define FLIPPER_PADDR 0x0C000000
+#define HOLLYWOOD_PADDR 0x0D000000
+#define HOLLYWOOD_MIRR_PADDR 0x0D800000
+
 struct _memState {
 	uint8_t *mem1_map_i[8]; /* MEM1 / "Splash" / "Napa" - mappings (Instr) */
 	uint8_t *mem1_map_d[8]; /* MEM1 / "Splash" / "Napa" - mappings (Data) */
