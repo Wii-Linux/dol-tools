@@ -128,9 +128,9 @@
 	#define HID4_PS1_CTL       (1 << HID4_PS1_CTL_SHIFT)
 	#define HID4_PS2_CTL_SHIFT (31 - 12)
 	#define HID4_PS2_CTL       (1 << HID4_PS2_CTL_SHIFT)
-	#define HID4_RSRVD0        ((1 << 5) | (1048575 << 12))
+	#define HID4_RSRVD0        ((1 << (31 - 8)) | 0x7FFFF)
 #else
-	#define HID4_RSRVD0        ((1 << 5) | (524287 << 13))
+	#define HID4_RSRVD0        ((1 << (31 - 5)) | 0xFFFFF)
 #endif
 
 /*

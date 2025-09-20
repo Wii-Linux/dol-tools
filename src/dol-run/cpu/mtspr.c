@@ -75,7 +75,7 @@ void E_PPC_Emulate_mtspr(uint32_t spr, uint32_t val) {
 			break;
 		}
 
-		if ((val & HID4_RSRVD1) != 1) {
+		if ((val & HID4_RSRVD1) >> HID4_RSRVD1_SHIFT != 1) {
 			puts("WARN: PPC: Attempt to set HID4 bit 0 (reserved, always 1) to 0");
 			val |= HID4_RSRVD1;
 		}
