@@ -38,8 +38,9 @@ void emergencyBailOut(void) {
 }
 
 int main(int argc, char *argv[]) {
-	int fd, ret, i;
+	int fd, ret, i, j;
 	char errBuf[256], modelBuf[64];
+	uint32_t instr;
 	uint8_t *file, *destAddr;
 	DOL_Hdr_t *hdr;
 	FILE *fp;
@@ -109,8 +110,28 @@ int main(int argc, char *argv[]) {
 	 */
 	DOL_Hdr_Byteswap(hdr);
 
-	/* TODO: assume console type of GCN */
+	/*
+	 * so... let's talk about this, because this is a *really* bad way to do this.
+	 * basically, we loop over every text section that has a non-zero size, and
+	 * then... yeah, we scan the *entire* code blob for a specific magic value.
+	 * this is.... very slow, we could be scanning *MEGABYTES* of code here.
+	 *
+	 * this approach to conole detection is what Dolphin does, and I'll admit it....
+	 * does actually work.  it's horridly clunky and probably makes startup take way
+	 * longer than it should, but it *does* work, so I'm doing it here.
+	 * if someone can think of a better way to detect it, please do send a PR.
+	 */
 	E_State.consoleType = CONSOLE_TYPE_GAMECUBE;
+	for (i = 0; i < 8; i++) {
+		for (j = 0; j < hdr->textSize[i] / sizeof(uint32_t); j++) {
+			instr = *(uint32_t *)(file + hdr->textOff[i] + (j * sizeof(uint32_t)));
+			if ((instr & 0xfc1fffff) == 0x7c13fba6) {
+				E_State.consoleType = CONSOLE_TYPE_WII;
+				goto determinedConsoleType;
+			}
+		}
+	}
+determinedConsoleType:
 
 	/* make sure we are not in an error state */
 	E_State.fatalError = false;
