@@ -97,7 +97,7 @@ void E_MMIO_Flipper_Write(uint32_t addr, uint32_t val, int accessWidth) {
 		}
 
 		else if ((addr & 0x0000FF00) == 0x00006C00) { /* AI */
-			E_MMIO_Forwarded_Write(addr, val, accessWidth);
+			E_MMIO_AI_Write(addr, val, accessWidth);
 			break;
 		}
 
