@@ -161,6 +161,8 @@ determinedConsoleType:
 
 	/* set up our mappings */
 	E_MemInit();
+	if (E_State.fatalError)
+	    return 1;
 
 	puts("Setting up Chipset MMIO...");
 	ret = E_MMIO_Chipset_Init();
@@ -168,6 +170,8 @@ determinedConsoleType:
 		printf("FATAL: E_MMIO_Chipset_Init() failed with return code %d\n", ret);
 		return 1;
 	}
+	if (E_State.fatalError)
+	    return 1;
 
 	printf("Loading %s for console type: %s, host console: %s...\n", argv[1], E_ConsoleTypeToStr(E_State.consoleType), E_ConsoleTypeToStr(E_State.hostType));
 
