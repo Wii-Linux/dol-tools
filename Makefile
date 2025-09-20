@@ -13,7 +13,7 @@ dol-run_src +=
 dol-run_src += cpu/common.c cpu/init.c cpu/mfspr.c cpu/mtspr.c
 dol-run_src += cpu/mtmsr_mfmsr.c cpu/mtsr_mfsr.c cpu/rfi.c
 dol-run_src +=
-dol-run_src += mmio/forward.c mmio/chipset.c mmio/flipper.c
+dol-run_src += mmio/forward.c mmio/chipset.c mmio/flipper.c mmio/hollywood.c
 dol-run_src += mmio/pi.c mmio/mi.c mmio/vi.c mmio/dsp.c mmio/ai.c
 
 dol-run_obj := $(patsubst %.c,build/dol-run/%.o,$(dol-run_src))

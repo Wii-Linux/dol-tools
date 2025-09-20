@@ -231,8 +231,6 @@ void E_SIGSEGV_Handler(int sig, siginfo_t *info, void *uctx) {
 			ctx->uc_mcontext.regs->gpr[regDest] = destPtr;
 		(*pc)++;
 	}
-
-	#if 0
 	else if (range == 0x0D800000 || range == 0x0D000000) {
 		if (E_State.consoleType == CONSOLE_TYPE_GAMECUBE) {
 			printf("FATAL: EMU: Attempting to access Hollywood registers (0x%08X) on GameCube\n", phys.addr);
@@ -242,14 +240,15 @@ void E_SIGSEGV_Handler(int sig, siginfo_t *info, void *uctx) {
 
 		phys.addr &= ~0x00800000;
 		if (isWrite)
-			E_MMIO_Hollywood_Write(phys.addr, val);
+			E_MMIO_Hollywood_Write(phys.addr, val, accessWidth);
 		else if (isRead)
-			val = E_MMIO_Hollywood_Read(phys.addr);
+			val = E_MMIO_Hollywood_Read(phys.addr, accessWidth);
+		if (updateRegDest)
+			ctx->uc_mcontext.regs->gpr[regDest] = destPtr;
+		(*pc)++;
 	}
-	#endif
-
 	else {
-		printf("FATAL: EMU: Trying to access phys address 0x%08X in nonsense range 0x%08X", phys.addr, range);
+		printf("FATAL: EMU: Trying to access phys address 0x%08X in nonsense range 0x%08X\n", phys.addr, range);
 		E_State.fatalError = true;
 		goto sigsegv_out;
 	}
