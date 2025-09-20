@@ -15,6 +15,9 @@
 #define HOLLYWOOD_PADDR 0x0D000000
 #define HOLLYWOOD_MIRR_PADDR 0x0D800000
 
+/* Linux fails mmap()'s that request memory to be maped >= this */
+#define MAX_ALLOWED_VADDR 0xC0000000
+
 struct _memState {
 	uint8_t *mem1_map_i[8]; /* MEM1 / "Splash" / "Napa" - mappings (Instr) */
 	uint8_t *mem1_map_d[8]; /* MEM1 / "Splash" / "Napa" - mappings (Data) */

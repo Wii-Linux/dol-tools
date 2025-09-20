@@ -3,11 +3,11 @@
  * Copyright (C) 2025 Techflash
  */
 
-#include "cpu.h"
 #include <stdio.h>
 #include <stdbool.h>
-#include <errno.h>
 #include <stdlib.h>
+#include <string.h>
+#include <errno.h>
 #include <unistd.h>
 
 
@@ -19,6 +19,7 @@
 #define _GNU_SOURCE
 #endif
 #include <sys/mman.h>
+#include "cpu.h"
 #include "emu.h"
 #include "mem.h"
 #include "config.h"
@@ -139,8 +140,8 @@ static void E_MemReloadMap(void) {
 							MAP_SHARED | MAP_FIXED,
 							fd, 0);
 
-			if (map_i[i] == MAP_FAILED) {
-				printf("FATAL: MEM: BATs: GCN: Failed mapping IBAT%d with phys addr 0x%08X to virt addr 0x%08X\n", i, paddr, vaddr);
+			if (map_d[i] == MAP_FAILED && vaddr < MAX_ALLOWED_VADDR) {
+				printf("FATAL: MEM: BATs: GCN: Failed mapping DBAT%d with phys addr 0x%08X to virt addr 0x%08X: %s (%d)\n", i, paddr, vaddr, strerror(errno), errno);
 				E_State.fatalError = true;
 				return;
 			}
@@ -186,8 +187,8 @@ static void E_MemReloadMap(void) {
 							MAP_SHARED | MAP_FIXED,
 							fd, 0);
 
-			if (map_i[i] == MAP_FAILED) {
-				printf("FATAL: MEM: BATs: GCN: Failed mapping IBAT%d with phys addr 0x%08X to virt addr 0x%08X\n", i, paddr, vaddr);
+			if (map_i[i] == MAP_FAILED && vaddr < MAX_ALLOWED_VADDR) {
+				printf("FATAL: MEM: BATs: Wii: Failed mapping IBAT%d with phys addr 0x%08X to virt addr 0x%08X: %s (%d)\n", i, paddr, vaddr, strerror(errno), errno);
 				E_State.fatalError = true;
 				return;
 			}
@@ -237,8 +238,8 @@ static void E_MemReloadMap(void) {
 							MAP_SHARED | MAP_FIXED,
 							fd, 0);
 
-			if (map_i[i] == MAP_FAILED) {
-				printf("FATAL: MEM: BATs: Wii: Failed mapping IBAT%d with phys addr 0x%08X to virt addr 0x%08X\n", i, paddr, vaddr);
+			if (map_d[i] == MAP_FAILED && vaddr < MAX_ALLOWED_VADDR) {
+				printf("FATAL: MEM: BATs: Wii: Failed mapping DBAT%d with phys addr 0x%08X to virt addr 0x%08X: %s (%d)\n", i, paddr, vaddr, strerror(errno), errno);
 				E_State.fatalError = true;
 				return;
 			}
@@ -439,16 +440,16 @@ int E_MemInit(void) {
 		E_State.cpu.dbatu[1] = 0xC0000000 /* BEPI */ | (BATU_BL_256MB << BATU_BL_SHIFT) | BATU_VS | BATU_VP;
 
 		/* MEM2 Insr */
-		E_State.cpu.ibatl[1] = 0x10000000 /* BPRN */ | (0b0000 << BATL_WIMG_SHIFT) | (BATL_PP_RW << BATL_PP_SHIFT);
-		E_State.cpu.ibatu[1] = 0x90000000 /* BEPI */ | (BATU_BL_256MB << BATU_BL_SHIFT) | BATU_VS | BATU_VP;
+		E_State.cpu.ibatl[4] = 0x10000000 /* BPRN */ | (0b0000 << BATL_WIMG_SHIFT) | (BATL_PP_RW << BATL_PP_SHIFT);
+		E_State.cpu.ibatu[4] = 0x90000000 /* BEPI */ | (BATU_BL_256MB << BATU_BL_SHIFT) | BATU_VS | BATU_VP;
 
 		/* MEM2 Data - Cached */
-		E_State.cpu.dbatl[2] = 0x10000000 /* BPRN */ | (0b0000 << BATL_WIMG_SHIFT) | (BATL_PP_RW << BATL_PP_SHIFT);
-		E_State.cpu.dbatu[2] = 0x90000000 /* BEPI */ | (BATU_BL_256MB << BATU_BL_SHIFT) | BATU_VS | BATU_VP;
+		E_State.cpu.dbatl[4] = 0x10000000 /* BPRN */ | (0b0000 << BATL_WIMG_SHIFT) | (BATL_PP_RW << BATL_PP_SHIFT);
+		E_State.cpu.dbatu[4] = 0x90000000 /* BEPI */ | (BATU_BL_256MB << BATU_BL_SHIFT) | BATU_VS | BATU_VP;
 
 		/* MEM2 Data - Uncached */
-		E_State.cpu.dbatl[3] = 0x10000000 /* BPRN */ | (0b0101 << BATL_WIMG_SHIFT) | (BATL_PP_RW << BATL_PP_SHIFT);
-		E_State.cpu.dbatu[3] = 0xD0000000 /* BEPI */ | (BATU_BL_256MB << BATU_BL_SHIFT) | BATU_VS | BATU_VP;
+		E_State.cpu.dbatl[5] = 0x10000000 /* BPRN */ | (0b0101 << BATL_WIMG_SHIFT) | (BATL_PP_RW << BATL_PP_SHIFT);
+		E_State.cpu.dbatu[5] = 0xD0000000 /* BEPI */ | (BATU_BL_256MB << BATU_BL_SHIFT) | BATU_VS | BATU_VP;
 		break;
 	}
 	default: {
@@ -501,6 +502,10 @@ void E_MemMapFixups(uint32_t old_msr) {
 				munmap(E_State.mem.mem2_map_i[i], E_State.mem.mem2_size);
 			if (E_State.mem.mem2_map_d[i] != (void *)-1)
 				munmap(E_State.mem.mem2_map_d[i], E_State.mem.mem2_size);
+			E_State.mem.mem1_map_i[i] = (void *)-1;
+			E_State.mem.mem1_map_d[i] = (void *)-1;
+			E_State.mem.mem2_map_i[i] = (void *)-1;
+			E_State.mem.mem2_map_d[i] = (void *)-1;
 		}
 
 		puts("MEM: Going from translated to real mode, mapping phys addrs...");
