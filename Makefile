@@ -31,7 +31,7 @@ CFLAGS := -Wall -Wextra -Wformat=2 -std=gnu89 -g
 # We also can't quite hog lomem @ 0, GCC & Binutils try to put
 # actually important crap there that we can't easily do anything about.
 # -Wl,--section-start=.mem1c_hog=0x80000000 -Wl,--section-start=.mem1u_hog=0xc0000000
-dol-run_LDFLAGS := -Wl,--section-start=.text=0x08000000 -Wl,--section-start=.lomem_hog=0x00010000 -fno-pic -fno-pie -static
+dol-run_LDFLAGS := -Wl,--section-start=.text=0x08000000 -Wl,--section-start=.lomem_hog=0x00010000 -Wl,--section-start=.init=0x20000000 -fno-pic -fno-pie -static
 
 .PHONY: dol-info dol-run
 all: dol-info dol-run
