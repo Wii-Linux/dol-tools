@@ -181,9 +181,9 @@ void E_PPC_Emulate_mtspr(uint32_t spr, uint32_t val) {
 			break;
 
 		if ((spr % 2) == 0)
-			E_State.cpu.dbatu[(spr - SPR_DBAT4U) / 2] = val;
+			E_State.cpu.dbatu[4 + (spr - SPR_DBAT4U) / 2] = val;
 		else
-			E_State.cpu.dbatl[(spr - SPR_DBAT4L) / 2] = val;
+			E_State.cpu.dbatl[4 + (spr - SPR_DBAT4L) / 2] = val;
 		break;
 	}
 	case SPR_IBAT0U:
@@ -215,9 +215,9 @@ void E_PPC_Emulate_mtspr(uint32_t spr, uint32_t val) {
 			break;
 
 		if ((spr % 2) == 0)
-			E_State.cpu.ibatu[(spr - SPR_IBAT4U) / 2] = val;
+			E_State.cpu.ibatu[4 + (spr - SPR_IBAT4U) / 2] = val;
 		else
-			E_State.cpu.ibatl[(spr - SPR_IBAT4L) / 2] = val;
+			E_State.cpu.ibatl[4 + (spr - SPR_IBAT4L) / 2] = val;
 		break;
 	}
 	default: {
