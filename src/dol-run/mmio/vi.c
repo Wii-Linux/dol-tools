@@ -10,13 +10,16 @@
 #include "../timer.h"
 #include "../emu.h"
 
+static struct _vi_state *state;
+
 static void E_MMIO_VI_TimerHook(void) {
 	puts("TimerHook: Hello from the VI timer hook");
 	/* TODO: Do something here */
 }
 
 void E_MMIO_VI_Init(void) {
-	memset(&E_State.chipset.vi, 0, sizeof(struct _vi_state));
+	state = &E_State.chipset.vi;
+	memset(state, 0, sizeof(struct _vi_state));
 	E_Timer_AddHook(E_MMIO_VI_TimerHook);
 }
 
@@ -33,7 +36,7 @@ uint32_t E_MMIO_VI_Read(uint32_t addr, int accessWidth) {
 	else if (accessWidth == 2) {
 		switch (addr & 0x00000FFF) {
 		case 0x06C:
-			return E_State.chipset.vi.viclk;
+			return state->viclk;
 		default: {
 			printf("FATAL: MMIO: VI: 16-bit Read from unknown register 0x%03X\n", addr & 0x00000FFF);
 			E_State.fatalError = true;

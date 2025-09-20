@@ -8,8 +8,11 @@
 #include <string.h>
 #include "../emu.h"
 
+static struct _mi_state *state;
+
 void E_MMIO_MI_Init(void) {
-	memset(&E_State.chipset.mi, 0, sizeof(struct _mi_state));
+	state = &E_State.chipset.mi;
+	memset(state, 0, sizeof(struct _mi_state));
 }
 
 uint32_t E_MMIO_MI_Read(uint32_t addr, int accessWidth) {
@@ -26,11 +29,11 @@ uint32_t E_MMIO_MI_Read(uint32_t addr, int accessWidth) {
 		switch (addr & 0x000000FF) {
 		default: {
 			case 0x10:
-				return E_State.chipset.mi.protType;
+				return state->protType;
 			case 0x1C:
-				return E_State.chipset.mi.intMask;
+				return state->intMask;
 			case 0x20:
-				return E_State.chipset.mi.unk_20;
+				return state->unk_20;
 			printf("FATAL: MMIO: MI: 16-bit Read from unknown register 0x%02X\n", addr & 0x000000FF);
 			E_State.fatalError = true;
 			return 0;
@@ -64,15 +67,15 @@ void E_MMIO_MI_Write(uint32_t addr, uint32_t val, int accessWidth) {
 		val &= 0x0000FFFF;
 		switch (addr & 0x000000FF) {
 		case 0x10: {
-			E_State.chipset.mi.protType = val;
+			state->protType = val;
 			break;
 		}
 		case 0x1C: {
-			E_State.chipset.mi.intMask = val;
+			state->intMask = val;
 			break;
 		}
 		case 0x20: {
-			E_State.chipset.mi.unk_20 = val;
+			state->unk_20 = val;
 			break;
 		}
 		default: {

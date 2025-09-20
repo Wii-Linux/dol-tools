@@ -9,15 +9,18 @@
 #include "ai.h"
 #include "../emu.h"
 
+static struct _ai_state *state;
+
 void E_MMIO_AI_Init(void) {
-	memset(&E_State.chipset.ai, 0, sizeof(struct _ai_state));
+	state = &E_State.chipset.ai;
+	memset(state, 0, sizeof(struct _ai_state));
 }
 
 uint32_t E_MMIO_AI_Read(uint32_t addr, int accessWidth) {
 	if (accessWidth == 4) {
 		switch (addr & 0x000000FF) {
 		case 0x00:
-			return E_State.chipset.ai.aicr;
+			return state->aicr;
 		default: {
 			printf("FATAL: MMIO: AI: 32-bit Read from unknown register 0x%02X\n", addr & 0x000000FF);
 			E_State.fatalError = true;
@@ -28,7 +31,7 @@ uint32_t E_MMIO_AI_Read(uint32_t addr, int accessWidth) {
 	else if (accessWidth == 2) {
 		switch (addr & 0x000000FF) {
 		case 0x00:
-			return E_State.chipset.ai.aicr & 0x0000FFFF;
+			return state->aicr & 0x0000FFFF;
 		default: {
 			printf("FATAL: MMIO: AI: 16-bit Read from unknown register 0x%02X\n", addr & 0x000000FF);
 			E_State.fatalError = true;
@@ -53,7 +56,7 @@ void E_MMIO_AI_Write(uint32_t addr, uint32_t val, int accessWidth) {
 	if (accessWidth == 4) {
 		switch (addr & 0x000000FF) {
 		case 0x00: {
-			E_State.chipset.ai.aicr = val;
+			state->aicr = val;
 			break;
 		}
 		default: {
@@ -67,8 +70,8 @@ void E_MMIO_AI_Write(uint32_t addr, uint32_t val, int accessWidth) {
 		val &= 0x00000FFF;
 		switch (addr & 0x000000FF) {
 		case 0x00: {
-			E_State.chipset.ai.aicr &= 0xFFFF0000;
-			E_State.chipset.ai.aicr |= (val & 0x0000FFFF);
+			state->aicr &= 0xFFFF0000;
+			state->aicr |= (val & 0x0000FFFF);
 			break;
 		}
 		default: {

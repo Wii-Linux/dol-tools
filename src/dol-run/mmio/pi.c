@@ -7,23 +7,26 @@
 #include <string.h>
 #include "../emu.h"
 
+static struct _pi_state *state;
+
 void E_MMIO_PI_Init(void) {
-	memset(&E_State.chipset.pi, 0, sizeof(struct _pi_state));
+	state = &E_State.chipset.pi;
+	memset(state, 0, sizeof(struct _pi_state));
 }
 
 uint32_t E_MMIO_PI_Read(uint32_t addr, int accessWidth) {
 	if (accessWidth == 4) {
 		switch (addr & 0x00000FFF) {
 		case 0x000: /* INTSR - Interrupt cause */
-			return E_State.chipset.pi.intsr;
+			return state->intsr;
 		case 0x004: /* INTMR - Interrupt mask */
-			return E_State.chipset.pi.intmr;
+			return state->intmr;
 		case 0x00c: /* FIFO base start */
-			return E_State.chipset.pi.fifo_bs;
+			return state->fifo_bs;
 		case 0x010: /* FIFO base end */
-			return E_State.chipset.pi.fifo_be;
+			return state->fifo_be;
 		case 0x014: /* FIFO current write pointer */
-			return E_State.chipset.pi.fifo_wp;
+			return state->fifo_wp;
 		case 0x02C: /* Hardware version */
 			return 0x246500B1;
 		default: {
@@ -59,23 +62,23 @@ uint32_t E_MMIO_PI_Read(uint32_t addr, int accessWidth) {
 	if (accessWidth == 4) {
 		switch (addr & 0x00000FFF) {
 		case 0x000: { /* INTSR - Interrupt cause */
-			E_State.chipset.pi.intsr = val;
+			state->intsr = val;
 			break;
 		}
 		case 0x004: { /* INTMR - Interrupt mask */
-			E_State.chipset.pi.intmr = val;
+			state->intmr = val;
 			break;
 		}
 		case 0x00c: { /* FIFO base start */
-			E_State.chipset.pi.fifo_bs = val;
+			state->fifo_bs = val;
 			break;
 		}
 		case 0x010: { /* FIFO base end */
-			E_State.chipset.pi.fifo_be = val;
+			state->fifo_be = val;
 			break;
 		}
 		case 0x014: { /* FIFO current write pointer */
-			E_State.chipset.pi.fifo_wp = val;
+			state->fifo_wp = val;
 			break;
 		}
 		case 0x02C: { /* Hardware version */
