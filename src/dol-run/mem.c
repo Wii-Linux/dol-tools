@@ -565,6 +565,24 @@ void E_MemMapFixups(uint32_t old_msr) {
 		}
 	}
 
+	if (!wasTranslating && isTranslating) {
+		/* unmap phys addrs first */
+		for (i = 0; i < maxBAT; i++) {
+			if (E_State.mem.mem1_map_i[i] != (void *)-1)
+				munmap(E_State.mem.mem1_map_i[i], E_State.mem.mem1_size);
+			if (E_State.mem.mem1_map_d[i] != (void *)-1)
+				munmap(E_State.mem.mem1_map_d[i], E_State.mem.mem1_size);
+			if (E_State.mem.mem2_map_i[i] != (void *)-1)
+				munmap(E_State.mem.mem2_map_i[i], E_State.mem.mem2_size);
+			if (E_State.mem.mem2_map_d[i] != (void *)-1)
+				munmap(E_State.mem.mem2_map_d[i], E_State.mem.mem2_size);
+			E_State.mem.mem1_map_i[i] = (void *)-1;
+			E_State.mem.mem1_map_d[i] = (void *)-1;
+			E_State.mem.mem2_map_i[i] = (void *)-1;
+			E_State.mem.mem2_map_d[i] = (void *)-1;
+		}
+	}
+
 	if (isTranslating)
 		E_MemReloadMap();
 
