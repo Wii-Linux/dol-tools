@@ -46,9 +46,7 @@ void E_Timer_AddHook(timerFunc_t hook) {
 void E_SIGALRM_Handler(int dummy) {
 	int i;
 	(void)dummy;
-	puts("TIMER: Is in SIGALRM handler");
 	for (i = 0; i < hookIdx; i++) {
-	    printf("TIMER: i=%d\n", i);
 		timersHooks[i]();
 	}
 

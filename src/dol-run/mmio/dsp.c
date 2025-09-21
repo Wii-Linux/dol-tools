@@ -42,7 +42,6 @@ static void E_MMIO_DSP_MboxPush_L(uint16_t val) {
 static void E_MMIO_DSP_TimerHook(void) {
 	memAddr_t virt;
 	uint32_t dmaSize;
-	puts("TimerHook: Hello from the DSP timer hook");
 
 	/* are we in reset?  it progresses even during halt */
 	if (state->priv_resetTimer == 2) {

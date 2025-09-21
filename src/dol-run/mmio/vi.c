@@ -13,7 +13,6 @@
 static struct _vi_state *state;
 
 static void E_MMIO_VI_TimerHook(void) {
-	puts("TimerHook: Hello from the VI timer hook");
 	/* TODO: Do something here */
 }
 
