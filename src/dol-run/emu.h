@@ -50,6 +50,9 @@ struct _emu_state {
 
 	/* stack for signals, or in-case-of-emergency */
 	stack_t sigstk;
+
+	/* Host TLS/SDA pointers */
+	uint32_t hostSDA[2];
 };
 
 /*

@@ -12,6 +12,7 @@
 #include "vi.h"
 #include "dsp.h"
 #include "ai.h"
+#include "hlwd-ipc.h"
 
 struct _chipset_state {
 	struct _pi_state pi;
@@ -19,6 +20,7 @@ struct _chipset_state {
 	struct _vi_state vi;
 	struct _dsp_state dsp;
 	struct _ai_state ai;
+	struct _ipc_state ipc;
 };
 extern int E_MMIO_Chipset_Init(void);
 

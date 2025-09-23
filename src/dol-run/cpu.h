@@ -183,7 +183,7 @@
 #define BATL_BPRN       (32767 << BATL_BPRN_SHIFT)
 #define BATL_WIMG_SHIFT (31 - 28)
 #define BATL_WIMG       (15 << BATL_WIMG_SHIFT)
-#define BATL_PP_SHIFT   (31 - 30)
+#define BATL_PP_SHIFT   (31 - 31)
 #define BATL_PP         (3 << BATL_PP_SHIFT)
 #define BATL_PP___      0 /* No access */
 #define BATL_PP_R_      1 /* Read-only */

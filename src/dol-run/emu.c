@@ -77,6 +77,7 @@ void E_SIGSEGV_Handler(int sig, siginfo_t *info, void *uctx) {
 	uint32_t **pc = ((uint32_t **)&ctx->uc_mcontext.regs->nip);
 	uint32_t faultingAddr = (uint32_t)ctx->uc_mcontext.regs->dar;
 	uint32_t accessType = ctx->uc_mcontext.regs->dsisr;
+	uint32_t r2, r13;
 	bool isRead = accessType == 0x40000000;
 	bool isWrite = accessType == 0x42000000;
 	bool isTranslating = ((E_State.cpu.msr & MSR_IR) >> MSR_IR_SHIFT) && ((E_State.cpu.msr & MSR_DR) >> MSR_DR_SHIFT);
@@ -87,6 +88,15 @@ void E_SIGSEGV_Handler(int sig, siginfo_t *info, void *uctx) {
 	memAddr_t phys;
 	(void)sig;
 	(void)info;
+
+	/* Save guest TLS/SDA pointers, restore host TLS/SDA pointers */
+	asm volatile(
+		"mr %0, %%r2\n\t"
+		"mr %1, %%r13\n\t"
+		// "mr %%r2, %2\n\t"
+		"mr %%r13, %3\n\t"
+		: "=r"(r2), "=r"(r13), "=r"(E_State.hostSDA[0]), "=r"(E_State.hostSDA[1]) : : "memory"
+	);
 
 	debug_sigsegv(
 		printf("Caught SIGSEGV @ %p\n", *pc);
@@ -289,11 +299,22 @@ sigsegv_out:
 	if (E_State.fatalError) {
 		printf("EMU: Uh oh!  Caught fatal error in handling this SIGILL (@ 0x%08X) - trying to recover...\n", (uint32_t)*pc);
 		ctx->uc_mcontext.regs->gpr[1] = ((uint32_t)(&E_State.sigstk)); /* give it our stack - game may have clobbered it */
+
+		/* try to give it sane TLS/SDA pointers */
+		ctx->uc_mcontext.regs->gpr[2] = E_State.hostSDA[0];
+		ctx->uc_mcontext.regs->gpr[13] = E_State.hostSDA[1];
 		*pc = ((uint32_t *)emergencyBailOut);
 		return;
 	}
-	else
-		debug_sigsegv(printf("Successfully handled instruction, returning to PC=0x%08X\n", (uint32_t)*pc));
+
+	debug_sigsegv(printf("Successfully handled instruction, returning to PC=0x%08X\n", (uint32_t)*pc));
+
+	/* Restore guest TLS/SDA pointers */
+	asm volatile(
+		// "mr %%r2, %0\n\t"
+		"mr %%r13, %1\n\t"
+		: "=r"(r2), "=r"(r13) : : "memory"
+	);
 
 	return;
 }
@@ -302,9 +323,19 @@ void E_SIGILL_Handler(int sig, siginfo_t *info, void *uctx) {
 	ucontext_t *ctx = (ucontext_t *)uctx;
 	uint32_t **pc = ((uint32_t **)&ctx->uc_mcontext.regs->nip);
 	uint32_t val = **pc;
-	uint32_t sprRaw, sprLow, sprHi, spr, regSrc, regDest, msr, segmentReg;
+	uint32_t sprRaw, sprLow, sprHi, spr, regSrc, regDest, msr, segmentReg, r2, r13;
 	(void)sig;
 	(void)info;
+	/* Save guest TLS/SDA pointers, restore host TLS/SDA pointers */
+	asm volatile(
+		"mr %0, %%r2\n\t"
+		"mr %1, %%r13\n\t"
+		// "mr %%r2, %2\n\t"
+		"mr %%r13, %3\n\t"
+		: "=r"(r2), "=r"(r13), "=r"(E_State.hostSDA[0]), "=r"(E_State.hostSDA[1]) : : "memory"
+	);
+
+
 	debug_sigill(printf("Caught SIGILL @ %p\n", *pc));
 	fflush(stdout);
 
@@ -416,11 +447,22 @@ void E_SIGILL_Handler(int sig, siginfo_t *info, void *uctx) {
 	if (E_State.fatalError) {
 		printf("EMU: Uh oh!  Caught fatal error in handling this SIGILL @ 0x%08X - trying to recover...\n", (uint32_t)*pc);
 		ctx->uc_mcontext.regs->gpr[1] = ((uint32_t)(&E_State.sigstk)); /* give it our stack - game may have clobbered it */
+
+		/* try to give it sane TLS/SDA pointers */
+		ctx->uc_mcontext.regs->gpr[2] = E_State.hostSDA[0];
+		ctx->uc_mcontext.regs->gpr[13] = E_State.hostSDA[1];
 		*pc = ((uint32_t *)emergencyBailOut);
 		return;
 	}
-	else
-		debug_sigill(printf("Successfully handled instruction, returning to PC=0x%08X\n", (uint32_t)*pc));
 
+	debug_sigill(printf("Successfully handled instruction, returning to PC=0x%08X\n", (uint32_t)*pc));
 	fflush(stdout);
+
+	/* Restore guest TLS/SDA pointers */
+	asm volatile(
+		// "mr %%r2, %0\n\t"
+		"mr %%r13, %1\n\t"
+		: "=r"(r2), "=r"(r13) : : "memory"
+	);
+	return;
 }

@@ -40,7 +40,7 @@ void emergencyBailOut(void) {
 int main(int argc, char *argv[]) {
 	int fd, ret, i, j;
 	char errBuf[256], modelBuf[64];
-	uint32_t instr;
+	uint32_t instr, r2, r13;
 	uint8_t *file, *destAddr;
 	DOL_Hdr_t *hdr;
 	FILE *fp;
@@ -248,6 +248,16 @@ determinedConsoleType:
 	E_CPU_Init();
 	if (E_State.fatalError)
 	    return 1;
+
+	/* Save TLS/SDA pointers */
+	asm volatile(
+		"mr %0, %%r2\n\t"
+		"mr %1, %%r13\n\t"
+		: "=r"(r2), "=r"(r13) : : "memory"
+	);
+
+	E_State.hostSDA[0] = r2;
+	E_State.hostSDA[1] = r13;
 	puts("Really beginning emulation... now!");
 
 	fflush(stdout);
