@@ -1,12 +1,16 @@
 #
 # DOL Tools - Top-level Makefile
-# Copyright (C) 2025 - Techflash
+# Copyright (C) 2025 - 2026 Techflash
 #
 
 
 dol-info_src := main.c
 dol-info_obj := $(patsubst %.c,build/dol-info/%.o,$(dol-info_src))
 dol-info_out := bin/dol-info
+
+dol-patch_src := main.c
+dol-patch_obj := $(patsubst %.c,build/dol-patch/%.o,$(dol-patch_src))
+dol-patch_out := bin/dol-patch
 
 dol-run_src := main.c mem.c emu.c dummyData.c timer.c
 dol-run_src +=
@@ -33,15 +37,21 @@ CFLAGS := -Wall -Wextra -Wformat=2 -std=gnu89 -g
 # -Wl,--section-start=.mem1c_hog=0x80000000 -Wl,--section-start=.mem1u_hog=0xc0000000
 dol-run_LDFLAGS := -Wl,--section-start=.text=0x08000000 -Wl,--section-start=.lomem_hog=0x00010000 -Wl,--section-start=.init=0x20000000 -Wl,--section-start=.note.gnu.build-id=0x20008000 -fno-pic -fno-pie -static
 
-.PHONY: dol-info dol-run
-all: dol-info dol-run
+.PHONY: dol-info dol-patch dol-run
+all: dol-info dol-patch dol-run
 
 dol-info: $(dol-info_out)
+dol-patch: $(dol-patch_out)
 dol-run: $(dol-run_out)
 
 $(dol-info_out): $(dol-info_obj)
 	@mkdir -p $(@D)
 	@$(CC) $(dol-info_LDFLAGS) $(LDFLAGS) $^ -o $@
+	$(info $s  LD    $@)
+
+$(dol-patch_out): $(dol-patch_obj)
+	@mkdir -p $(@D)
+	@$(CC) $(dol-patch_LDFLAGS) $(LDFLAGS) $^ -o $@
 	$(info $s  LD    $@)
 
 $(dol-run_out): $(dol-run_obj)

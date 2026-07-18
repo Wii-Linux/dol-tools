@@ -4,6 +4,17 @@ Tools for interacting with the "DOL" format used in titles for the Nintendo® Ga
 ## dol-info
 Small tool written in relatively portable ANSI C89, to dump all of the relevant info about a DOL's header.
 
+## dol-patch
+Modifies one 32-bit field in a DOL header in place:
+
+```
+dol-patch <file> <field> <32-bit hex value>
+```
+
+Fields are `textN_addr`, `textN_size`, or `textN_offset` for text sections 0–6;
+`dataN_addr`, `dataN_size`, or `dataN_offset` for data sections 0–10; and
+`bss_addr`, `bss_size`, or `entry`. Values may optionally begin with `0x`.
+
 ## dol-run
 Tool written in relatively portable ANSI C89, to run a DOL on the host by means of userspace-implemented Problem-State virtualization.  
 It is expected to be run on a GameCube® or Wii® under Linux®.  
@@ -20,4 +31,4 @@ It currently stubs out just enough to get basic devkitPPC/libogc applications st
 "Apple®" is a registered trademark of Apple Inc.  
 "Linux®" is the registered trademark of Linus Torvalds in the U.S. and other countries.  
   
-Code of DOL Tools is Copyright (C) 2025 Techflash and DOL Tools contributors.  Licensed under the GNU GPL v2
+Code of DOL Tools is Copyright (C) 2025-2026 Techflash and DOL Tools contributors.  Licensed under the GNU GPL v2
